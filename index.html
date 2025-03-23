@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Get Ready to LEARN ...again</title>
     <style>
-        @font-face {
-            font-family: 'Comic Sans MS';
-            src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-solid-900.woff2') format('woff2');
-            font-weight: normal;
-            font-style: normal;
-        }
-        
         body {
             font-family: 'Comic Sans MS', 'Comic Sans', cursive;
             background-color: #f5f5f5;
@@ -74,32 +67,37 @@
             color: #333;
         }
         
-        .sound-control {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background-color: #ddd;
-            border-radius: 50%;
-            width: 50px;
+        .audio-button {
+            display: block;
+            width: 200px;
             height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin: 20px auto;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            font-size: 1.2rem;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        .sound-icon {
-            font-size: 24px;
-            color: #333;
+        .audio-button:hover {
+            background-color: #45a049;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        
+        .audio-button-icon {
+            margin-right: 10px;
+            font-size: 1.4rem;
         }
     </style>
 </head>
 <body>
-    <div class="sound-control" id="soundToggle">
-        <div class="sound-icon">🔊</div>
-    </div>
-    
     <div class="container">
         <header>
             <h1>Get ready to</h1>
@@ -109,7 +107,12 @@
             </div>
         </header>
         
-        <img src="/powerPoint.png" alt="Learning event presentation" class="event-image">
+        <img src="./powerPoint.png" alt="Learning event presentation" class="event-image">
+        
+        <button class="audio-button" id="audioButton">
+            <span class="audio-button-icon">🔊</span>
+            <span>Play Audio</span>
+        </button>
         
         <div class="date-section">
             <h2>Save the date:</h2>
@@ -118,47 +121,69 @@
     </div>
     
     <audio id="bgMusic" loop>
-        <source src="/powerPoint.mp3" type="audio/mpeg">
+        <source src="./powerPoint.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const music = document.getElementById('bgMusic');
-            const soundToggle = document.getElementById('soundToggle');
-            const soundIcon = soundToggle.querySelector('.sound-icon');
+            const audioButton = document.getElementById('audioButton');
+            const audioButtonIcon = audioButton.querySelector('.audio-button-icon');
+            const audioButtonText = audioButton.querySelector('span:last-child');
+            let isPlaying = false;
             
-            // Auto play music (might be blocked by browsers)
+            // Try to autoplay (most browsers will block this)
             try {
                 music.volume = 0.5;
-                music.play().catch(function(error) {
-                    console.log('Auto-play was prevented. Please use the sound button to start the music.');
-                    soundIcon.textContent = '🔈';
+                music.play().then(function() {
+                    isPlaying = true;
+                    updateButtonState();
+                }).catch(function(error) {
+                    console.log('Auto-play was prevented. Please use the button to start the music.');
+                    isPlaying = false;
+                    updateButtonState();
                 });
             } catch (e) {
                 console.log('Audio play error:', e);
-                soundIcon.textContent = '🔈';
+                isPlaying = false;
+                updateButtonState();
             }
             
             // Toggle music on/off
-            soundToggle.addEventListener('click', function() {
-                if (music.paused) {
-                    music.play();
-                    soundIcon.textContent = '🔊';
-                } else {
+            audioButton.addEventListener('click', function() {
+                if (isPlaying) {
                     music.pause();
-                    soundIcon.textContent = '🔈';
+                    isPlaying = false;
+                } else {
+                    music.play().catch(function(e) {
+                        console.log('Play was prevented:', e);
+                    });
+                    isPlaying = true;
                 }
+                updateButtonState();
             });
             
-            // Alternative Bossa Nova source if the CDN one doesn't work
+            function updateButtonState() {
+                if (isPlaying) {
+                    audioButtonIcon.textContent = '🔊';
+                    audioButtonText.textContent = 'Pause Audio';
+                    audioButton.style.backgroundColor = '#e53935';
+                } else {
+                    audioButtonIcon.textContent = '🔈';
+                    audioButtonText.textContent = 'Play Audio';
+                    audioButton.style.backgroundColor = '#4CAF50';
+                }
+            }
+            
+            // Handle errors with the audio file
             music.addEventListener('error', function() {
-                // If the first source fails, try an alternative
-                music.innerHTML = '<source src="https://cdnjs.cloudflare.com/ajax/libs/ion-sound/3.0.7/sounds/bossa_nova.mp3" type="audio/mpeg">';
-                music.load();
-                music.play().catch(function(e) {
-                    console.log('Auto-play was prevented for alternative source.');
-                });
+                console.log('Audio file not found. Please check the path.');
+                isPlaying = false;
+                updateButtonState();
+                audioButton.disabled = true;
+                audioButton.style.backgroundColor = '#cccccc';
+                audioButtonText.textContent = 'Audio Unavailable';
             });
         });
     </script>
